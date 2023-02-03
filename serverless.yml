@@ -1,0 +1,39 @@
+service: box-video-skill
+provider:
+  name: aws
+  runtime: nodejs12.x
+  environment:
+      APIGATEWAY: 'ENTER_GENERATED_API_GATEWAY'
+      S3_BUCKET: 'ENTER_GENERATED_S3_BUCKET_NAME'
+      VI_ACCOUNT_ID: 'ENTER_VIDEO_INDEXER_ACCOUNT_ID'
+      VI_AUTH_KEY_1: 'ENTER_AUTH_KEY1'
+      VI_AUTH_KEY_2: 'ENTER_AUTH_KEY2'
+      FROM_EMAIL: 'ENTER_AN_EMAIL_TO_PRODUCE_EMAILS'
+      FROM_EMAIL_PASS: 'ENTER_THE_PASSWORD_OF_PRODUCER'
+      TO_EMAIL: 'ENTER_EMAIL_OF_RECIPIENT'
+  timeout: 28
+  
+  
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - "s3:ListBucket"
+      Resource: { "Fn::Join" : ["", ["arn:aws:s3:::", { "Ref" : "ServerlessDeploymentBucket" } ] ]  }
+    - Effect: "Allow"
+      Action:
+        - "s3:PutObject"
+        - "s3:GetObject"
+      Resource:
+        Fn::Join:
+          - ""
+          - - "arn:aws:s3:::"
+            - "Ref" : "ServerlessDeploymentBucket"
+            - "/*"
+  
+functions:
+  hello:
+    handler: index.handler
+    events:
+      - http:
+          path: /
+          method: any
