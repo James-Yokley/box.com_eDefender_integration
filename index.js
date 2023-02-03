@@ -16,6 +16,7 @@ const { FilesReader, SkillsWriter, SkillsErrorEnum } = require("./skills-kit-2.0
 const {VideoIndexer, ConvertTime} = require("./video-indexer");
 const AWS = require("aws-sdk");
 const sendErrorEmail = require("./email").sendErrorEmail;
+const fs = require("fs"); 
 
 var s3 = new AWS.S3();
 // const cloneDeep = require("lodash/cloneDeep"); // For deep cloning json objects
@@ -74,6 +75,7 @@ module.exports.handler = async (event) => {
 
             // Transcripts (sometimes text is empty string such as "")
             let transcripts = [];
+            let textDoc = ""; 
             indexerData.videos[0].insights.transcript.forEach(tr => {
                 // Check if empty or whitespace
                 if (tr.text.trim()) {
@@ -83,22 +85,31 @@ module.exports.handler = async (event) => {
                             return {start: ConvertTime(time.start), end: ConvertTime(time.end)};
                         })
                     })
+                    textDoc += `${tr.instances.map(time => {
+                        ConvertTime(time.start)
+                    })} \xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0 ${tr.text} \n`
                 }
             })
             console.log(transcripts);
+            console.log(textDoc); 
+
             cards.push(skillsWriter.createTranscriptsCard(transcripts, fileDuration));
 
             // Faces (sometimes there are no faces detected)
             if (indexerData.videos[0].insights.faces) {
                 let faces = [];
+                let timestamps = []; 
                 indexerData.videos[0].insights.faces.forEach(fa => {
                     faces.push({
                         text: fa.name,
-                        image_url: videoIndexer.getFace(fa.thumbnailId)
+                        image_url: videoIndexer.getFace(fa.thumbnailId),
+                        appears: fa.thumbnails.instances.forEach(ins =>{
+                            timestamps.push({start: ConvertTime(ins.start), end: ConvertTime(ins.end)});
+                        })
                     })
                 });
                 console.log(faces);
-                cards.push(await skillsWriter.createFacesCard(faces));
+                cards.push(await skillsWriter.createFacesCard(faces, fileDuration));
             }
         
             await skillsWriter.saveDataCards(cards);
