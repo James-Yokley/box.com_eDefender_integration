@@ -1,4 +1,4 @@
-service: box-video-skill
+service: box-video-skill-aj
 provider:
   name: aws
   runtime: nodejs12.x
@@ -31,7 +31,7 @@ provider:
             - "/*"
   
 functions:
-  hello:
+  hello-aj:
     handler: index.handler
     events:
       - http:
