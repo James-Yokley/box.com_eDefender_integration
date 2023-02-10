@@ -13,11 +13,10 @@ function TranscribeDoc(data) {
         }
     }
     const sdk = BoxSDK.getPreconfiguredInstance(sdkConfig);
-    this.client = sdk.getAnonymousClient();
-    this.textDoc = "";
-    fileName = 'test';
+    const client = sdk.getAnonymousClient();
+    let textDoc = "";
+    let fileName = 'test';
     data.videos[0].insights.transcript.forEach(tr => {
-        count++;
         if (tr.text.trim()) {
             textDoc += `Speaker ${tr.speakerId} : \xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0 ${tr.text} \n`
         }
@@ -68,4 +67,4 @@ function TranscribeDoc(data) {
 
 }
 
-module.exports = { TranscribeDoc }; 
+module.exports.TranscribeDoc = TranscribeDoc; 
