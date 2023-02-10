@@ -17,7 +17,7 @@ const { VideoIndexer, ConvertTime } = require("./video-indexer");
 const AWS = require("aws-sdk");
 const sendErrorEmail = require("./email").sendErrorEmail;
 const fs = require("fs");
-const TranscribeDoc = require("./transcribe-doc");
+const TranscribeDoc = require("./transcribe-doc").TranscribeDoc;
 let fileName = "";
 var s3 = new AWS.S3();
 // const cloneDeep = require("lodash/cloneDeep"); // For deep cloning json objects
@@ -72,7 +72,7 @@ module.exports.handler = async (event) => {
                 }
             });
             console.log(keywords);
-            cards.push(skillsWriter.createTopicsCard(keywords, fileDuration));
+            cards.push(skillsWriter.createTopicsCard(keywords, fileDuration, 'Keywords'));
 
             // Transcripts (sometimes text is empty string such as "")
             let transcripts = [];
@@ -94,20 +94,25 @@ module.exports.handler = async (event) => {
             console.log(transcripts);
             console.log(textDoc);
             console.debug('Calling transcribeDoc');
-            TranscribeDoc(indexerData);
+            console.debug(TranscribeDoc);
+
+            try {
+                TranscribeDoc(indexerData);
+            } catch (e) {
+                console.error(e);
+            }
 
             cards.push(skillsWriter.createTranscriptsCard(transcripts, fileDuration));
 
             // Faces (sometimes there are no faces detected)
             if (indexerData.videos[0].insights.faces) {
                 let faces = [];
-                let timestamps = [];
                 indexerData.videos[0].insights.faces.forEach(fa => {
                     faces.push({
                         text: fa.name,
                         image_url: videoIndexer.getFace(fa.thumbnailId),
-                        appears: fa.thumbnails.instances.forEach(ins => {
-                            timestamps.push({ start: ConvertTime(ins.start), end: ConvertTime(ins.end) });
+                        appears: fa.instances.map(time => {
+                            return { start: ConvertTime(time.start), end: ConvertTime(time.end) };
                         })
                     })
                 });
