@@ -13,19 +13,20 @@
 
 'use strict';
 const { FilesReader, SkillsWriter, SkillsErrorEnum } = require("./skills-kit-2.0");
-const {VideoIndexer, ConvertTime} = require("./video-indexer");
+const { VideoIndexer, ConvertTime } = require("./video-indexer");
 const AWS = require("aws-sdk");
 const sendErrorEmail = require("./email").sendErrorEmail;
-const fs = require("fs"); 
-
+const fs = require("fs");
+const TranscribeDoc = require("./transcribe-doc");
+let fileName = "";
 var s3 = new AWS.S3();
 // const cloneDeep = require("lodash/cloneDeep"); // For deep cloning json objects
 
 module.exports.handler = async (event) => {
-    
+
     // VideoIndexer event
     if (event && event.queryStringParameters && event.queryStringParameters.state === "Processed") {
-        
+
         console.debug(`VideoIndexer finished processing event received: ${JSON.stringify(event)}`);
 
         try {
@@ -51,7 +52,7 @@ module.exports.handler = async (event) => {
             let skillsWriter = new SkillsWriter(fileContext);
 
             const indexerData = await videoIndexer.getData(videoId); // Can create skill cards after data extraction
-                                                                    // This method also stores videoId for future use.
+            // This method also stores videoId for future use.
 
             const cards = [];
 
@@ -64,7 +65,7 @@ module.exports.handler = async (event) => {
                     keywords.push({
                         text: kw.name,
                         appears: kw.appearances.map(time => {
-                            return {start: time.startSeconds, end: time.endSeconds};
+                            return { start: time.startSeconds, end: time.endSeconds };
                             // return {start: time.startSeconds, end: time.endSeconds};
                         })
                     })
@@ -75,14 +76,14 @@ module.exports.handler = async (event) => {
 
             // Transcripts (sometimes text is empty string such as "")
             let transcripts = [];
-            let textDoc = ""; 
+            let textDoc = "";
             indexerData.videos[0].insights.transcript.forEach(tr => {
                 // Check if empty or whitespace
                 if (tr.text.trim()) {
                     transcripts.push({
                         text: tr.text,
                         appears: tr.instances.map(time => {
-                            return {start: ConvertTime(time.start), end: ConvertTime(time.end)};
+                            return { start: ConvertTime(time.start), end: ConvertTime(time.end) };
                         })
                     })
                     textDoc += `${tr.instances.map(time => {
@@ -91,30 +92,32 @@ module.exports.handler = async (event) => {
                 }
             })
             console.log(transcripts);
-            console.log(textDoc); 
+            console.log(textDoc);
+            console.debug('Calling transcribeDoc');
+            TranscribeDoc(indexerData);
 
             cards.push(skillsWriter.createTranscriptsCard(transcripts, fileDuration));
 
             // Faces (sometimes there are no faces detected)
             if (indexerData.videos[0].insights.faces) {
                 let faces = [];
-                let timestamps = []; 
+                let timestamps = [];
                 indexerData.videos[0].insights.faces.forEach(fa => {
                     faces.push({
                         text: fa.name,
                         image_url: videoIndexer.getFace(fa.thumbnailId),
-                        appears: fa.thumbnails.instances.forEach(ins =>{
-                            timestamps.push({start: ConvertTime(ins.start), end: ConvertTime(ins.end)});
+                        appears: fa.thumbnails.instances.forEach(ins => {
+                            timestamps.push({ start: ConvertTime(ins.start), end: ConvertTime(ins.end) });
                         })
                     })
                 });
                 console.log(faces);
                 cards.push(await skillsWriter.createFacesCard(faces, fileDuration));
             }
-        
+
             await skillsWriter.saveDataCards(cards);
 
-        } catch(e) {
+        } catch (e) {
             console.error(e);
             sendErrorEmail(e);
         }
@@ -129,11 +132,11 @@ module.exports.handler = async (event) => {
             console.debug(`Box event received: ${JSON.stringify(event)}`);
             let videoIndexer = new VideoIndexer(process.env.APIGATEWAY); // Initialized with callback endpoint
             await videoIndexer.getToken(true);
-            
+
             // instantiate your two skill development helper tools
             let filesReader = new FilesReader(event.body);
             let fileContext = filesReader.getFileContext();
-    
+
             // S3 write fileContext JSON to save tokens for later use.
             let params = {
                 Bucket: process.env.S3_BUCKET,
@@ -142,18 +145,19 @@ module.exports.handler = async (event) => {
             }
             let s3Response = await s3.upload(params).promise()
             console.log(s3Response);
-    
+
             let skillsWriter = new SkillsWriter(fileContext);
-            
+
             await skillsWriter.saveProcessingCard();
-        
+
             console.debug("sending video to VI");
-            await videoIndexer.upload(fileContext.fileName, fileContext.requestId, fileContext.fileDownloadURL,JSON.parse(event.body).skill.name); // Will POST a success when it's done indexing.
+            await videoIndexer.upload(fileContext.fileName, fileContext.requestId, fileContext.fileDownloadURL, JSON.parse(event.body).skill.name); // Will POST a success when it's done indexing.
             console.debug("video sent to VI");
-    
+
             console.debug("returning response to box");
-            return {statusCode: 200};
-        } catch(e) {
+            fileName = fileContext.fileName;
+            return { statusCode: 200 };
+        } catch (e) {
             console.error(e);
             sendErrorEmail(e);
         }
@@ -162,6 +166,6 @@ module.exports.handler = async (event) => {
         console.debug("Unknown request");
         console.log(event);
 
-        return {statusCode: 400, body: "Unknown Request"};
+        return { statusCode: 400, body: "Unknown Request" };
     }
 };
