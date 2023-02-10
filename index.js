@@ -98,14 +98,17 @@ module.exports.handler = async (event) => {
             // Faces (sometimes there are no faces detected)
             if (indexerData.videos[0].insights.faces) {
                 let faces = [];
-                let timestamps = []; 
+                // let timestamps = []; 
                 indexerData.videos[0].insights.faces.forEach(fa => {
                     faces.push({
                         text: fa.name,
                         image_url: videoIndexer.getFace(fa.thumbnailId),
-                        appears: fa.thumbnails.instances.forEach(ins =>{
-                            timestamps.push({start: ConvertTime(ins.start), end: ConvertTime(ins.end)});
+                        appears: fa.instances.map(time => {
+                            return {start: ConvertTime(time.start), end: ConvertTime(time.end)};
                         })
+                        // appears: fa.thumbnails.instances.forEach(ins =>{
+                        //     timestamps.push({start: ConvertTime(ins.start), end: ConvertTime(ins.end)});
+                        // })
                     })
                 });
                 console.log(faces);
