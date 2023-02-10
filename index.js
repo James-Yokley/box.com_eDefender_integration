@@ -71,7 +71,7 @@ module.exports.handler = async (event) => {
                 }
             });
             console.log(keywords);
-            cards.push(skillsWriter.createTopicsCard(keywords, fileDuration));
+            cards.push(skillsWriter.createTopicsCard(keywords, fileDuration, 'Keywords'));
 
             // Transcripts (sometimes text is empty string such as "")
             let transcripts = [];
