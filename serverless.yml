@@ -1,7 +1,7 @@
-service: box-video-skill
+service: box-video-skill-with-auth-and-folderID
 provider:
   name: aws
-  runtime: nodejs12.x
+  runtime: nodejs14.x
   environment:
       APIGATEWAY: 'ENTER_GENERATED_API_GATEWAY'
       S3_BUCKET: 'ENTER_GENERATED_S3_BUCKET_NAME'
@@ -14,7 +14,11 @@ provider:
       BOX_CLIENT_ID: 'ENTER_BOX_CLIENT_ID'
       BOX_CLIENT_SECRET: 'ENTER_BOX_CLIENT_SECRET'
       BOX_DEV_TOKEN: 'ENTER_BOX_DEV_TOKEN'
-
+      BOX_CLIENT_KEY_ID: 'ENTER_BOX_CLIENT_KEY_ID'
+      BOX_CLIENT_PRIVATE_KEY: 'ENTER_BOX_CLIENT_PRIVATE_KEY'
+      BOX_CLIENT_PASSPHRASE: 'ENTER_BOX_CLIENT_PASSPHRASE'
+      BOX_ENTERPRISE_ID: 'ENTER_BOX_ENTERPRISE_ID'
+      BOX_FOLDER_ID: 'ENTER_BOX_FOLDER_ID'
   timeout: 28
   
   
@@ -41,3 +45,7 @@ functions:
       - http:
           path: /
           method: any
+
+plugins:
+  - serverless-plugin-common-excludes
+  - serverless-plugin-include-dependencies

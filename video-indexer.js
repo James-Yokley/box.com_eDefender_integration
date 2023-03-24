@@ -8,16 +8,14 @@ const https = require("https"); // Low level API for HTTPS request/response
  */
 
 function VideoIndexer(apiGateway) {
-    const uri = apiGateway;
-    const encodedURI = encodeURI(uri);
-    this.apiGateway = encodedURI;
+    this.apiGateway = apiGateway;
     this.location = "trial"; // Trial VideoIndexer accounts has its own location.
     this.accountId = process.env.VI_ACCOUNT_ID; // Your VideoIndexer account ID
     this.authKey = process.env.VI_AUTH_KEY_1; // API key for VideoIndexer
     this.authKey2 = process.env.VI_AUTH_KEY_2; // API key for VideoIndexer
     this.hostname = "api.videoindexer.ai";
     this.accessToken = "";
-    this.language = "";
+	this.language = "";
 }
 
 /**
@@ -28,16 +26,13 @@ function VideoIndexer(apiGateway) {
  * https://api-portal.videoindexer.ai/docs/services/Operations/operations/Upload-Video?
  */
 VideoIndexer.prototype.upload = function (fileName, requestId, fileUrl, skillname) {
-    console.log(skillname);
-    if (skillname.includes("English")) {
-        this.language = "en-US";
-    }
-    else if (skillname.includes("Spanish")) {
-        this.language = "es-ES";
-    } else {
-        this.language = "en-US";
-    }
-    fileName = fileName.split(" ").join("");
+	console.log(skillname);
+	if(skillname.includes("English")){
+		this.language = "en-US";
+	}
+	else if(skillname.includes("Spanish")){
+		this.language = "es-ES";
+	}
     let callback = this.apiGateway + "?requestId=" + requestId;
     const options = {
         host: this.hostname,
@@ -47,8 +42,7 @@ VideoIndexer.prototype.upload = function (fileName, requestId, fileUrl, skillnam
             "Authorization": `Bearer ${this.accessToken}`
         }
     };
-    console.debug("Request Path: \n" + options.path);
-    console.debug("Request headers: \n" + options.headers);
+
     console.debug("before upload video:\n" + this.accessToken);
     return new Promise((resolve, reject) => {
 
@@ -65,10 +59,10 @@ VideoIndexer.prototype.upload = function (fileName, requestId, fileUrl, skillnam
             console.error(e);
             reject(e);
         });
-
+    
         request.end();
     });
-
+        
 };
 
 /**
@@ -137,21 +131,21 @@ VideoIndexer.prototype.getToken = function (allowEdit) {
             console.log(result);
             console.log('statusCode:', result.statusCode);
             console.log('headers:', result.headers);
-
+    
             let data = [];
             result.on('data', (d) => {
                 data.push(d)
             });
-
+    
             result.on("end", () => {
                 data = Buffer.concat(data).toString();
-                data = data.substring(1, data.length - 1); // Wasted like 6 hours on this because token is wrapped in "double quote" characters
+                data = data.substring(1, data.length-1); // Wasted like 6 hours on this because token is wrapped in "double quote" characters
                 // Need to find out what's causing the encoding issue that inserts double quotes around the token
                 this.accessToken = data;
                 console.log(this.accessToken);
                 resolve("Success: Authorization Token");
             });
-
+    
         })
         request.on('error', (e) => {
             console.error(e);
@@ -162,11 +156,9 @@ VideoIndexer.prototype.getToken = function (allowEdit) {
     });
 };
 
-
-
 function ConvertTime(hhmmss) {
     const time = hhmmss.split(":");
     return time[0] * 3600.0 + time[1] * 60.0 + time[2] * 1.0;
 }
 
-module.exports = { VideoIndexer, ConvertTime };
+module.exports = {VideoIndexer, ConvertTime};
