@@ -138,8 +138,6 @@ function FilesReader(body) {
     this.fileType = getFileType(this.fileFormat);
     this.fileReadToken = eventBody.token.read.access_token;
     this.fileWriteToken = eventBody.token.write.access_token;
-    // this.fileReadToken = "blahblah";
-    // this.fileWriteToken = "blahblah";
     this.fileReadClient = sdk.getBasicClient(this.fileReadToken);
     this.fileDownloadURL = `${BOX_API_ENDPOINT}/files/${this.fileId}/content?access_token=${this.fileReadToken}`;
 }
@@ -485,7 +483,7 @@ SkillsWriter.prototype.createMetadataCard = function createMetadataCard(
         type: SKILLS_METADATA_CARD_TYPE, // skill_card
         skill: {
             type: SKILLS_SERVICE_TYPE, // service
-            id: `${this.skillId}` // Samuel Moon: This needs to be a string for some reason. Maybe their API changed recently?
+            id: this.skillId
         },
         skill_card_type: type,
         skill_card_title: {
@@ -495,14 +493,19 @@ SkillsWriter.prototype.createMetadataCard = function createMetadataCard(
         invocation: {
             type: SKILLS_METADATA_INVOCATION_TYPE, // skill_invocation
             id: this.requestId
-        },
-        status
+        }
+        // },
+        // status // AJ Voisan: add status field only for status cards
     };
     if (optionalEntries) {
         template.entries = optionalEntries;
     }
     if (optionalfileDuration) {
         template.duration = parseFloat(optionalfileDuration);
+    }
+    // AJ Voisan: Add status field only on status cards
+    if(type === cardType.STATUS) {
+        template.status = status
     }
     return template;
 };

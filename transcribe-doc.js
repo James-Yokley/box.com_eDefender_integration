@@ -1,21 +1,41 @@
 'use strict';
-const { writeFileSync } = require("fs");
+const fs = require("fs");
 const { Document, Packer, Paragraph, AlignmentType, TextRun } = require("docx");
+const { Readable } = require('stream');
+const { Buffer } = require("buffer");
+const BoxSDK = require("box-node-sdk");
+const path = require('path');
+const config = require('./config.json');
 
+function TranscribeDoc(data, fileName, folderId) {
+    
+    // const sdk = new BoxSDK({
+    //     clientID: process.env.BOX_CLIENT_ID,
+    //     clientSecret: process.env.BOX_CLIENT_SECRET,
+    //     appAuth: {
+    //         // keyID: process.env.BOX_CLIENT_KEY_ID,
+    //         // privateKey: process.env.BOX_CLIENT_PRIVATE_KEY,
+    //         // passphrase: process.env.BOX_CLIENT_PASSPHRASE
+    //     }
+    // });
+    // const appUserClient = sdk.getAppAuthClient('enterprise', process.env.BOX_ENTERPRISE_ID);
 
-function TranscribeDoc(data) {
-    const BoxSDK = require("box-node-sdk");
+    const sdk = BoxSDK.getPreconfiguredInstance(config);
+    const appUserClient = sdk.getAppAuthClient('enterprise');
+    
+    // filename without extension
+    let filename = path.parse(fileName).name; 
+    console.log("filename without extension: " + filename);
 
-    const sdkConfig = {
-        boxAppSettings: {
-            clientID: process.env.BOX_CLIENT_ID,
-            clientSecret: process.env.BOX_CLIENT_SECRET
-        }
-    }
-    const sdk = BoxSDK.getPreconfiguredInstance(sdkConfig);
-    const client = sdk.getAnonymousClient();
+    // current folder to upload Transcription document
+    // let folderID = process.env.BOX_FOLDER_ID; 
+
+    // Grab folderID from function parameter
+
+    const folderID = folderId;
+    console.log("Inside TranscribeDoc - folderID: " + folderID);
+
     let textDoc = "";
-    let fileName = 'test';
     data.videos[0].insights.transcript.forEach(tr => {
         if (tr.text.trim()) {
             textDoc += `Speaker ${tr.speakerId} : \xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0 ${tr.text} \n`
@@ -50,20 +70,26 @@ function TranscribeDoc(data) {
         ]
     });
     const vidID = data.videosRanges.videoId;
-    Packer.toBuffer(doc).then((buffer) => {
-        writeFileSync(`${fileName}.docx`, buffer);
-    })
-    //can change the filename from vidID.docx to filename.docx
-    //will need to pass folderID for each folder that implements this function 
-    client.files.uploadFile(194050929935, `${fileName}.docx`, fs.readFileSync(`${fileName}.docx`));
 
-    fs.unlink('./' + `${vidID}.docx`, (err) => {
-        if (err) {
-            throw err;
-        }
-        console.log("Deleted file successfully");
-    })
-    // Need to use box sdk to write file to the folder
+    Packer.toBase64String(doc).then((string) => {
+        let base64Content = string; // your base64 content
+        let base64Buffer = Buffer.from(base64Content, 'base64');
+        // we are using just Readable to create a stream, but you can use any library you want
+        let stream = new Readable()
+        stream._read = () => {
+            stream.push(base64Buffer);
+            stream.push(null);
+        };
+        // you have to pass options and define content length
+        let options = {
+            content_length: Buffer.byteLength(base64Content, 'base64')
+        };
+
+        // `${tempFileName}.docx`
+        
+        appUserClient.files.uploadFile(folderID, `${filename}.docx`, stream, options).then(file => {
+        });
+    });
 
 }
 
