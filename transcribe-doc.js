@@ -1,6 +1,6 @@
 'use strict';
 const fs = require("fs");
-const { Document, Packer, Paragraph, AlignmentType, TextRun } = require("docx");
+const docx = require("docx");
 const { Readable } = require('stream');
 const { Buffer } = require("buffer");
 const BoxSDK = require("box-node-sdk");
@@ -44,31 +44,85 @@ function TranscribeDoc(data, fileName, folderId) {
     textDoc += 'END OF RECORDING';
 
     console.log(textDoc);
-    const textRuns = textDoc.split("\n").map(line => new TextRun({ break: 1, text: line }));
-    const paragraph = new Paragraph({
-        children: textRuns, border: {
-            left: {
-                color: "auto",
-                space: 1,
-                style: "double",
-                size: 8
-            },
-            right: {
-                color: "auto",
-                space: 1,
-                style: "single",
-                size: 8
-            }
+    const textRuns = textDoc.split('\n').map((line, index) => new docx.TextRun({ break: index > 0 ? 1: undefined, text: line, size: 24 }));
+    
+    let textRunSize = textRuns.length;
+    while(textRunSize%28 !== 0) {
+        textRuns.push(new docx.TextRun({ break: 1 }));
+        textRunSize++;
+    };
+
+    const paragraph = new docx.Paragraph({
+        children: textRuns,
+        spacing: {
+            line: 460,
+            lineRule: "exact"
         }
     });
 
-
-    const doc = new Document({
+    const doc = new docx.Document({
         sections: [{
+            properties: {
+                page: {
+                    size: {
+                        width: docx.convertInchesToTwip(8.5),
+                        height: docx.convertInchesToTwip(11)
+                    },
+                    pageNumbers: {
+                        start: 1,
+                        formatType: docx.NumberFormat.DECIMAL
+                    },
+                    borders: {
+                        pageBorderLeft: {
+                            style: docx.BorderStyle.DOUBLE,
+                            size: 1 * 8,
+                            space: 4,
+                            color: "000000"
+                        },
+                        pageBorderRight: {
+                            style: docx.BorderStyle.SINGLE,
+                            size: 1 * 8,
+                            space: 4,
+                            color: "000000"
+                        }
+                    }
+                },
+                lineNumbers: {
+                    countBy: 1,
+                    restart: docx.LineNumberRestartFormat.NEW_PAGE
+                }
+            },
+            headers: {
+                default: new docx.Header({
+                    children: [
+                        new docx.Paragraph({
+                            children:
+                            [
+                                new docx.TextRun(`${filename}.docx`)
+                            ]
+                        })
+                    ]
+                })
+            },
+            footers: {
+                default: new docx.Footer({
+                    children: [
+                        new docx.Paragraph({
+                            alignment: docx.AlignmentType.CENTER,
+                            children: [
+                                new docx.TextRun({
+                                    children: [docx.PageNumber.CURRENT], size: 24
+                                })
+                            ]
+                        })
+                    ]
+                })
+            },
             children: [paragraph],
         }
         ]
     });
+
     const vidID = data.videosRanges.videoId;
 
     Packer.toBase64String(doc).then((string) => {
@@ -93,4 +147,4 @@ function TranscribeDoc(data, fileName, folderId) {
 
 }
 
-module.exports.TranscribeDoc = TranscribeDoc; 
+module.exports.TranscribeDoc = TranscribeDoc;
