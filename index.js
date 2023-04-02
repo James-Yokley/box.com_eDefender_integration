@@ -96,6 +96,22 @@ module.exports.handler = async (event) => {
             console.log(transcripts);
             cards.push(skillsWriter.createTranscriptsCard(transcripts, fileDuration));
 
+            
+            // New TranscribeDoc section
+            console.debug('Calling transcribeDoc');
+            console.debug(TranscribeDoc);
+
+            try {
+                TranscribeDoc(indexerData, fileContext.fileName, folderId);
+            } catch (e) {
+                console.error(e);
+            }
+
+            console.log("After TranscribeDoc");
+
+
+
+
             // Faces (sometimes there are no faces detected)
             if (indexerData.videos[0].insights.faces) {
                 let faces = [];
@@ -115,17 +131,7 @@ module.exports.handler = async (event) => {
             
             await skillsWriter.saveDataCards(cards);
 
-            console.debug('Calling transcribeDoc');
-            console.debug(TranscribeDoc);
-
-            try {
-                TranscribeDoc(indexerData, fileContext.fileName, folderId);
-            } catch (e) {
-                console.error(e);
-            }
-
-            console.log("After TranscribeDoc");
-
+            // This was where transcribe-doc call was originally placed
 
         } catch(e) {
             console.error(e);
