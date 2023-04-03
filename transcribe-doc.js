@@ -8,17 +8,6 @@ const path = require('path');
 const config = require('./config.json');
 
 function TranscribeDoc(data, fileName, folderId) {
-    
-    // const sdk = new BoxSDK({
-    //     clientID: process.env.BOX_CLIENT_ID,
-    //     clientSecret: process.env.BOX_CLIENT_SECRET,
-    //     appAuth: {
-    //         // keyID: process.env.BOX_CLIENT_KEY_ID,
-    //         // privateKey: process.env.BOX_CLIENT_PRIVATE_KEY,
-    //         // passphrase: process.env.BOX_CLIENT_PASSPHRASE
-    //     }
-    // });
-    // const appUserClient = sdk.getAppAuthClient('enterprise', process.env.BOX_ENTERPRISE_ID);
 
     const sdk = BoxSDK.getPreconfiguredInstance(config);
     const appUserClient = sdk.getAppAuthClient('enterprise');
@@ -125,7 +114,7 @@ function TranscribeDoc(data, fileName, folderId) {
 
     const vidID = data.videosRanges.videoId;
 
-    Packer.toBase64String(doc).then((string) => {
+    docx.Packer.toBase64String(doc).then((string) => {
         let base64Content = string; // your base64 content
         let base64Buffer = Buffer.from(base64Content, 'base64');
         // we are using just Readable to create a stream, but you can use any library you want
