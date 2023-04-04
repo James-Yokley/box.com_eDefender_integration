@@ -32,7 +32,7 @@ function TranscribeDoc(data, fileName, folderId) {
     let textDoc = "";
     data.videos[0].insights.transcript.forEach(tr => {
         if (tr.text.trim()) {
-            textDoc += `Speaker ${tr.speakerId} : \xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0 ${tr.text} \n`
+            textDoc += `Speaker ${tr.speakerId}:\xa0 ${tr.text}\n`
         }
     })
     textDoc += 'END OF RECORDING';
@@ -42,11 +42,6 @@ function TranscribeDoc(data, fileName, folderId) {
     
     textDoc.split('\n').map(line => {
         textWidth = ctx.measureText(line).width;
-        
-        if(textWidth > 511.046875) {
-            textSize++;
-            textWidth = textWidth - 511.046875;
-        };
 
         while(textWidth > 622.96875) {
             textSize++;
