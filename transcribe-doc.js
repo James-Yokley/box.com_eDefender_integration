@@ -54,6 +54,11 @@ function TranscribeDoc(data, fileName, folderId) {
         };
     });
 
+    while(textSize%28 !== 0) {
+        textRuns.push(new docx.TextRun({ break: 1 }));
+        textSize++;
+    };
+
     const paragraph = new docx.Paragraph({
         children: textRuns,
         spacing: {
