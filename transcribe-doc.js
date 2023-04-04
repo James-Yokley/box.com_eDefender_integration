@@ -7,6 +7,11 @@ const BoxSDK = require("box-node-sdk");
 const path = require('path');
 const config = require('./config.json');
 
+const { createCanvas } = require('canvas');
+const canvas = createCanvas(100, 50);
+const ctx = canvas.getContext('2d');
+ctx.font = '12pt Times New Roman';
+
 function TranscribeDoc(data, fileName, folderId) {
 
     const sdk = BoxSDK.getPreconfiguredInstance(config);
@@ -35,11 +40,19 @@ function TranscribeDoc(data, fileName, folderId) {
     console.log(textDoc);
     const textRuns = textDoc.split('\n').map((line, index) => new docx.TextRun({ break: index > 0 ? 1: undefined, text: line, size: 24 }));
     
-    let textRunSize = textRuns.length;
-    while(textRunSize%28 !== 0) {
-        textRuns.push(new docx.TextRun({ break: 1 }));
-        textRunSize++;
-    };
+    textDoc.split('\n').map(line => {
+        textWidth = ctx.measureText(line).width;
+        
+        if(textWidth > 511.046875) {
+            textSize++;
+            textWidth = textWidth - 511.046875;
+        };
+
+        while(textWidth > 622.96875) {
+            textSize++;
+            textWidth = textWidth - 622.96875;
+        };
+    });
 
     const paragraph = new docx.Paragraph({
         children: textRuns,
