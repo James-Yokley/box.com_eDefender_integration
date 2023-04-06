@@ -102,7 +102,7 @@ module.exports.handler = async (event) => {
             console.debug(TranscribeDoc);
 
             try {
-                TranscribeDoc(indexerData, fileContext.fileName, folderId);
+                await TranscribeDoc(indexerData, fileContext.fileName, folderId);
             } catch (e) {
                 console.error(e);
             }

@@ -7,7 +7,10 @@ const BoxSDK = require("box-node-sdk");
 const path = require('path');
 const config = require('./config.json');
 
-function TranscribeDoc(data, fileName, folderId) {
+// maximum number of tries for filename duplicates
+const MAX_TRIES = 10;
+
+async function TranscribeDoc(data, fileName, folderId) {
 
     const sdk = BoxSDK.getPreconfiguredInstance(config);
     const appUserClient = sdk.getAppAuthClient('enterprise');
@@ -123,15 +126,47 @@ function TranscribeDoc(data, fileName, folderId) {
             stream.push(base64Buffer);
             stream.push(null);
         };
+
+        let content_size = Buffer.byteLength(base64Content, 'base64');
+
         // you have to pass options and define content length
         let options = {
-            content_length: Buffer.byteLength(base64Content, 'base64')
+            content_length: content_size
         };
 
-        // `${tempFileName}.docx`
-        
-        appUserClient.files.uploadFile(folderID, `${filename}.docx`, stream, options).then(file => {
-        });
+        //checklist of name and size for preflight check
+        let checklist = {
+            name: null,
+            size: content_size
+        };
+
+        let duplicateCount = 0;
+        const preflightCheckFileName = (tempFileName) => {
+
+            checklist.name = `${tempFileName}.docx`;
+            console.log("checklist.name", checklist.name);
+
+            appUserClient.files.preflightUploadFile(folderID, checklist, null)
+                .then(file => {
+                    console.log("upload file name:", tempFileName);
+                    appUserClient.files.uploadFile(folderID, `${tempFileName}.docx`, stream, options)
+                        .then(file => { return })
+                        .catch(error => { console.log(error) });
+                })
+                .catch(error => {
+                    let body = error.response.body;
+                    if(body.code === 'item_name_in_use' && ++duplicateCount <= MAX_TRIES) {
+                        if(duplicateCount > 1 && tempFileName.slice(-4) === ` (${duplicateCount-1})`) {
+                            tempFileName = tempFileName.slice(0, -4);
+                        } 
+                        preflightCheckFileName(tempFileName.concat( ` (${duplicateCount})`));
+                    }
+                    else throw(error);
+                });
+        };
+
+        preflightCheckFileName(filename);
+
     });
 
 }
