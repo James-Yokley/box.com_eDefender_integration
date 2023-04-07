@@ -27,7 +27,7 @@ function TranscribeDoc(data, fileName, folderId) {
         let textDoc = "";
         data.videos[0].insights.transcript.forEach(tr => {
             if (tr.text.trim()) {
-                textDoc += `Speaker ${tr.speakerId} : \xa0\xa0\xa0\xa0\xa0\xa0\xa0\xa0 ${tr.text} \n`
+                textDoc += `Speaker ${tr.speakerId} : \xa0\xa0 ${tr.text} \n`
             }
         })
         textDoc += 'END OF RECORDING';
