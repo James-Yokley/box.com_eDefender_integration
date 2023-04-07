@@ -96,18 +96,7 @@ module.exports.handler = async (event) => {
             console.log(transcripts);
             cards.push(skillsWriter.createTranscriptsCard(transcripts, fileDuration));
 
-            
-            // New TranscribeDoc section
-            console.debug('Calling transcribeDoc');
-            console.debug(TranscribeDoc);
-
-            try {
-                await TranscribeDoc(indexerData, fileContext.fileName, folderId);
-            } catch (e) {
-                console.error(e);
-            }
-
-            console.log("After TranscribeDoc");
+        
 
 
 
@@ -128,9 +117,15 @@ module.exports.handler = async (event) => {
                 cards.push(await skillsWriter.createFacesCard(faces, fileDuration));
             }
 
-            
-            await skillsWriter.saveDataCards(cards);
+            // New TranscribeDoc section
+            console.debug('Calling transcribeDoc');
+            console.debug(TranscribeDoc);
 
+            await TranscribeDoc(indexerData, fileContext.fileName, folderId);
+
+            console.log("After TranscribeDocBefore saveDataCards");
+            await skillsWriter.saveDataCards(cards);
+            console.log("After saveDataCards");
             // This was where transcribe-doc call was originally placed
 
         } catch(e) {
