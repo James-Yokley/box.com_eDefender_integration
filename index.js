@@ -138,7 +138,7 @@ module.exports.handler = async (event) => {
     let parsedBody = JSON.parse(event.body);
     console.log(parsedBody);
 
-    if (parsedBody.hasOwnProperty("type") && parsedBody.type == "skill_invocation") {
+    if (event && parsedBody.hasOwnProperty("type") && parsedBody.type === "skill_invocation") {
         try {
             console.debug(`Box event received: ${JSON.stringify(event)}`);
             let videoIndexer = new VideoIndexer(process.env.APIGATEWAY); // Initialized with callback endpoint
