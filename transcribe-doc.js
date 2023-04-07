@@ -163,68 +163,7 @@ function TranscribeDoc(data, fileName, folderId) {
 
             tries++;
         }
-
-
-
-
-
-
-
-        // docx.Packer.toBase64String(doc).then((string) => {
-        //     let base64Content = string; // your base64 content
-        //     let base64Buffer = Buffer.from(base64Content, 'base64');
-        //     // we are using just Readable to create a stream, but you can use any library you want
-        //     let stream = new Readable()
-        //     stream._read = () => {
-        //         stream.push(base64Buffer);
-        //         stream.push(null);
-        //     };
-
-        //     let content_size = Buffer.byteLength(base64Content, 'base64');
-
-        //     // you have to pass options and define content length
-        //     let options = {
-        //         content_length: content_size
-        //     };
-
-        //     //checklist of name and size for preflight check
-        //     let checklist = {
-        //         name: null,
-        //         size: content_size
-        //     };
-
-
-            
-        //     const preflightCheckFileName = (tempFileName, count) => {
-        //         let duplicateCount = count;
-        //         checklist.name = `${tempFileName}.docx`;
-        //         console.log("checklist.name", checklist.name);
-
-        //         appUserClient.files.preflightUploadFile(folderID, checklist, null)
-        //             .then(file => {
-        //                 console.log("upload file name:", tempFileName);
-        //                 appUserClient.files.uploadFile(folderID, `${tempFileName}.docx`, stream, options)
-        //                     .then(file => { resolve() })
-        //                     .catch(error => { console.log(error) });
-        //             })
-        //             .catch(error => {
-        //                 let body = error.response.body;
-        //                 if(body.code === 'item_name_in_use' && ++duplicateCount <= MAX_TRIES) {
-        //                     if(duplicateCount > 1 && tempFileName.slice(-4) === ` (${duplicateCount-1})`) {
-        //                         tempFileName = tempFileName.slice(0, -4);
-        //                     } 
-        //                     preflightCheckFileName(tempFileName.concat( ` (${duplicateCount})`), duplicateCount);
-        //                 }
-        //                 else throw(error);
-        //             });
-        //     };
-
-        //     preflightCheckFileName(filename);
-
-        // });
-    });
-    
-
+    });  
 }
 
 module.exports.TranscribeDoc = TranscribeDoc;
