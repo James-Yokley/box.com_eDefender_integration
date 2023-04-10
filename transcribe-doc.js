@@ -33,9 +33,17 @@ function TranscribeDoc(data, fileName, folderId) {
         textDoc += 'END OF RECORDING';
 
         console.log(textDoc);
-        const textRuns = textDoc.split('\n').map((line, index) => new docx.TextRun({ break: index > 0 ? 1: undefined, text: line, size: 24 }));
-        
-        let textRunSize = textRuns.length;
+        let textSize = 0;
+        const textRuns = textDoc.split('\n').map((line, index) => {
+            let lineSize = line.length;
+            while(lineSize > 96) {
+                textSize++;
+                lineSize -= 95;
+            }
+
+            return new docx.TextRun({ break: index > 0 ? 1: undefined, text: line, size: 24 })
+        });
+        textSize += textRuns.length;
         while(textRunSize%28 !== 0) {
             textRuns.push(new docx.TextRun({ break: 1 }));
             textRunSize++;
